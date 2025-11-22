@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Meal Schedule Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(76, 175, 80, 0.05) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            border-radius: 2px;
+        }
+
+        .header h1 {
+            color: #2E7D32;
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #388E3C;
+            font-size: 1.3em;
+            font-weight: 300;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 50px;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: width 0.4s ease;
+            z-index: -1;
+        }
+
+        .btn:hover::before {
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #4CAF50, #66BB6A);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, #FF9800, #FFB74D);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        .btn-outside {
+            background: linear-gradient(to right, #E91E63, #F06292);
+            color: white;
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+        }
+
+        .btn-outside:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+        }
+
+        .week-info {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .week-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, #4CAF50, #8BC34A);
+        }
+
+        .week-info h2 {
+            color: #2E7D32;
+            font-size: 1.9em;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .week-info p {
+            color: #4CAF50;
+            font-size: 1.1em;
+            font-weight: 400;
+        }
+
+        .schedule-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 1100px) {
+            .schedule-container {
+                flex-direction: column;
+            }
+        }
+
+        .weekdays-section, .weekend-section {
+            flex: 1;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .weekdays-header {
+            background: rgba(76, 175, 80, 0.1);
+            color: #2E7D32;
+            border: 2px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .weekend-header {
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%);
+            color: #C2185B;
+            border: 2px solid rgba(233, 30, 99, 0.2);
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .day-card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            padding: 25px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+            cursor: pointer;
+        }
+
+        .day-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .day-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .day-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        /* Today's card - highlighted focus theme */
+        .day-card.today {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(139, 195, 74, 0.15) 100%);
+            border: 3px solid #4CAF50;
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.25);
+            transform: scale(1.02);
+        }
+
+        .day-card.today::before {
+            transform: scaleX(1);
+            height: 6px;
+        }
+
+        .day-card.today::after {
+            content: "TODAY";
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: linear-gradient(to right, #4CAF50, #66BB6A);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+            z-index: 10;
+        }
+
+        .day-card.today:hover {
+            transform: scale(1.02) translateY(-5px);
+            box-shadow: 0 15px 35px rgba(76, 175, 80, 0.3);
+        }
+
+        .day-card.today .day-name {
+            color: #1B5E20;
+            font-weight: 700;
+        }
+
+        .day-card.today .meal-name {
+            color: #1B5E20;
+        }
+
+        /* Weekend card styling */
+        .weekend-section .day-card {
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%);
+            border: 1px solid rgba(233, 30, 99, 0.1);
+        }
+
+        .weekend-section .day-card:hover {
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%);
+        }
+
+        .weekend-section .day-card::before {
+            background: linear-gradient(to right, #E91E63, #9C27B0);
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .day-name {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2E7D32;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .weekend-section .day-name {
+            color: #C2185B;
+        }
+
+        .day-icon {
+            font-size: 1.6em;
+            color: #4CAF50;
+        }
+
+        .weekend-section .day-icon {
+            color: #E91E63;
+        }
+
+        .meal-type {
+            display: inline-block;
+            padding: 6px 14px;
+            background: linear-gradient(to right, #E8F5E9, #C8E6C9);
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: #2E7D32;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .weekend-section .meal-type {
+            background: linear-gradient(to right, #FCE4EC, #F8BBD0);
+            color: #C2185B;
+        }
+
+        .restaurant-order {
+            background: linear-gradient(to right, #E91E63, #F06292);
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(233, 30, 99, 0.2);
+        }
+
+        .meal-name {
+            font-size: 1.25em;
+            color: #388E3C;
+            margin: 15px 0 10px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .weekend-section .meal-name {
+            color: #C2185B;
+        }
+
+        .meal-description {
+            font-size: 0.95em;
+            color: #689F38;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .weekend-section .meal-description {
+            color: #9C27B0;
+        }
+
+        .meal-details {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #7CB342;
+            flex-wrap: wrap;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(129, 199, 132, 0.15);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .weekend-section .detail-item {
+            background: rgba(233, 30, 99, 0.1);
+            color: #C2185B;
+        }
+
+        .weekend-section .detail-icon {
+            color: #E91E63;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #4CAF50;
+            font-size: 1.3em;
+            font-weight: 500;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(76, 175, 80, 0.2);
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .meal-image {
+            width: 100%;
+            height: 160px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .meal-image.error {
+            display: none;
+        }
+
+        .image-placeholder {
+            width: 100%;
+            height: 160px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: #4CAF50;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .weekend-section .image-placeholder {
+            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 100%);
+            color: #E91E63;
+        }
+
+        .image-placeholder::after {
+            content: '';
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9rem;
+            color: #388E3C;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 4px 12px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .weekend-section .image-placeholder::after {
+            color: #C2185B;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9E9E9E;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            border: 1px dashed rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .empty-state::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #E0E0E0, #BDBDBD);
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 25px;
+            color: #BDBDBD;
+            opacity: 0.7;
+        }
+
+        .empty-state h3 {
+            color: #757575;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .grocery-list {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 40px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grocery-list::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, #FF9800, #FFB74D);
+        }
+
+        .grocery-list h3 {
+            color: #F57C00;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.5em;
+            font-weight: 500;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .grocery-list ul {
+            list-style: none;
+            columns: 2;
+            column-gap: 30px;
+        }
+
+        .grocery-list li {
+            padding: 10px 0;
+            color: #F57C00;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            break-inside: avoid;
+        }
+
+        .grocery-list li::before {
+            content: '📋';
+            margin-right: 5px;
+            font-size: 1.2em;
+            opacity: 0.7;
+        }
+
+        .restaurant-list {
+            background: rgba(255, 235, 238, 0.7);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 40px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .restaurant-list::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, #E91E63, #F06292);
+        }
+
+        .restaurant-list h3 {
+            color: #C2185B;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.5em;
+            font-weight: 500;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .restaurant-list p {
+            color: #D81B60;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .restaurant-list ul {
+            list-style: none;
+            columns: 2;
+            column-gap: 30px;
+        }
+
+        .restaurant-list li {
+            padding: 10px 0;
+            color: #C2185B;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            break-inside: avoid;
+        }
+
+        .restaurant-list li::before {
+            content: '🍽️';
+            margin-right: 5px;
+            font-size: 1.2em;
+            opacity: 0.7;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s ease;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #757575;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: #f5f5f5;
+            color: #E91E63;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            padding-right: 40px;
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            color: #2E7D32;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .modal-subtitle {
+            color: #388E3C;
+            font-size: 1em;
+            font-weight: 400;
+        }
+
+        .modal-section {
+            margin-bottom: 25px;
+        }
+
+        .modal-section h4 {
+            color: #4CAF50;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #E8F5E9;
+        }
+
+        .ingredients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .ingredient-item {
+            background: #E8F5E9;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #388E3C;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .cost-comparison {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #F5F5F5;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .cost-bar {
+            flex: 1;
+            height: 20px;
+            background: #E0E0E0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .cost-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .cost-low { background: #4CAF50; }
+        .cost-medium { background: #FF9800; }
+        .cost-medium-high { background: #FF5722; }
+        .cost-high { background: #E91E63; }
+
+        .cost-legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .difficulty-easy { background: #C8E6C9; color: #2E7D32; }
+        .difficulty-medium { background: #FFE0B2; color: #E65100; }
+
+        @media (max-width: 768px) {
+            .schedule-container {
+                flex-direction: column;
+            }
+            
+            .ingredients-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .cost-legend {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ Weekly Meal Schedule</h1>
+            <p>Your personalized meal planning assistant</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="generateSchedule()">
+                🎲 Generate New Schedule
+            </button>
+            <button class="btn btn-secondary" onclick="showGroceryList()">
+                🛒 Grocery List
+            </button>
+            <button class="btn btn-outside" onclick="randomOrderOut()">
+                🏪 Order Out Tonight!
+            </button>
+        </div>
+
+        <div class="week-info" id="weekInfo">
+            <h2>Week <span id="weekNumber">1</span></h2>
+            <p id="dateRange">Click generate to create your first schedule!</p>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Creating your delicious meal schedule...</p>
+        </div>
+
+        <div id="scheduleContent">
+            <div class="empty-state">
+                <div class="empty-state-icon">🍳</div>
+                <h3>No schedule yet!</h3>
+                <p>Click "Generate New Schedule" to create your personalized weekly meal plan.</p>
+            </div>
+        </div>
+
+        <div class="grocery-list" id="groceryList" style="display: none;">
+            <h3>🛍️ Weekly Grocery List</h3>
+            <ul id="groceryItems"></ul>
+        </div>
+
+        <div class="restaurant-list" id="restaurantList" style="display: none;">
+            <h3>🏪 Restaurant Order</h3>
+            <p id="restaurantChoice">Click "Order Out Tonight!" to randomly select a restaurant!</p>
+            <ul id="restaurantItems"></ul>
+        </div>
+
+        <!-- Meal Details Modal -->
+        <div class="modal-overlay" id="mealModal">
+            <div class="modal-content">
+                <button class="modal-close" onclick="closeMealModal()">&times;</button>
+                <div class="modal-header">
+                    <div class="modal-title" id="modalTitle"></div>
+                    <div class="modal-subtitle" id="modalSubtitle"></div>
+                </div>
+                
+                <div class="modal-section">
+                    <h4>📝 Ingredients</h4>
+                    <div class="ingredients-grid" id="ingredientsList"></div>
+                </div>
+
+                <div class="modal-section">
+                    <h4>📊 Difficulty & Cost</h4>
+                    <div id="difficultyDisplay"></div>
+                    
+                    <div class="cost-comparison">
+                        <span>Cost Level:</span>
+                        <div class="cost-bar">
+                            <div class="cost-fill" id="costBar"></div>
+                        </div>
+                        <span id="costText"></span>
+                    </div>
+                    
+                    <div class="cost-legend">
+                        <div class="legend-item">
+                            <div class="legend-color cost-low"></div>
+                            <span>$ Low</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color cost-medium"></div>
+                            <span>$$ Medium</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color cost-medium-high"></div>
+                            <span>$$$ Med-High</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color cost-high"></div>
+                            <span>$$$$ High</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load meals configuration from external files for easy editing -->
+    <script src="meals-config.js"></script>
+    <script src="meals-images.js"></script>
+    <script>
+        // Build allMeals array with images from meals-images.js
+        const allMeals = mealsConfig.map(meal => ({
+            ...meal,
+            localImage: mealImages[meal.name] || '',
+            image: `https://source.unsplash.com/400x300/?${encodeURIComponent(meal.name)},food`
+        }));
+
+        // Build groceryDatabase from config
+        const groceryDatabase = {};
+        mealsConfig.forEach(meal => {
+            if (meal.ingredients) {
+                groceryDatabase[meal.name] = meal.ingredients;
+            }
+        });
+
+        // Use restaurants from config
+        const restaurantOptions = restaurantsConfig;
+
+        let currentWeek = 1;
+        let currentSchedule = null;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            updateWeekInfo();
+            generateSchedule(); // Generate first schedule automatically
+        });
+
+        function updateWeekInfo() {
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6); // Sunday
+
+            const options = { month: 'short', day: 'numeric' };
+            const dateRange = `${startOfWeek.toLocaleDateString('en-US', options)} - ${endOfWeek.toLocaleDateString('en-US', options)}`;
+
+            document.getElementById('weekNumber').textContent = currentWeek;
+            document.getElementById('dateRange').textContent = dateRange;
+        }
+
+        // Pick n random unique meals from allMeals
+        function getRandomMeals(count) {
+            const shuffled = [...allMeals].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, count);
+        }
+
+        function generateSchedule() {
+            const loading = document.getElementById('loading');
+            const scheduleContent = document.getElementById('scheduleContent');
+
+            // Hide restaurant list when generating new schedule
+            document.getElementById('restaurantList').style.display = 'none';
+
+            // Show loading state
+            loading.classList.add('show');
+            scheduleContent.innerHTML = '';
+
+            // Simulate API delay for better UX
+            setTimeout(() => {
+                // Pick 7 random different meals for the week
+                const weekMeals = getRandomMeals(7);
+                const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+                const schedule = {};
+                days.forEach((day, index) => {
+                    schedule[day] = weekMeals[index];
+                });
+                
+                currentSchedule = schedule;
+                displaySchedule(schedule);
+                
+                // Hide loading state
+                loading.classList.remove('show');
+                
+                // Increment week
+                currentWeek++;
+                updateWeekInfo();
+            }, 1000);
+        }
+
+        function displaySchedule(schedule) {
+            const scheduleContent = document.getElementById('scheduleContent');
+            const baseDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const baseDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+            // Get today's day index (0 = Sunday, 1 = Monday, etc.)
+            const todayIndex = new Date().getDay();
+
+            // Reorder arrays to start from today
+            const days = [];
+            const dayNames = [];
+            for (let i = 0; i < 7; i++) {
+                const idx = (todayIndex + i) % 7;
+                days.push(baseDays[idx]);
+                dayNames.push(baseDayNames[idx]);
+            }
+
+            let html = '<div class="schedule-grid" style="max-width: 100%;">';
+
+            days.forEach((day, index) => {
+                const meal = schedule[day];
+                const isToday = index === 0; // First card is always today
+
+                html += `
+                    <div class="day-card fade-in ${isToday ? 'today' : ''}"
+                         style="animation-delay: ${index * 0.1}s"
+                         onclick="showMealDetails('${meal.name}', '${meal.desc}', '${meal.time}', '${meal.difficulty}', '${meal.cost}', '${meal.emoji}')">
+                        <div class="day-header">
+                            <div class="day-name">
+                                ${dayNames[index]}
+                            </div>
+                            <span class="meal-type">${meal.type}</span>
+                        </div>
+
+                        <img src="${meal.localImage}"
+                             data-fallback="${meal.image}"
+                             alt="${meal.name}"
+                             class="meal-image"
+                             onerror="handleImageError(this, '${meal.emoji}', '${meal.name}')">
+
+                        <div class="meal-name">${meal.name}</div>
+                        <div class="meal-description">${meal.desc}</div>
+
+                        <div class="meal-details">
+                            <div class="detail-item">
+                                <span class="detail-icon">⏱️</span>
+                                ${meal.time}
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon">👨‍🍳</span>
+                                ${meal.difficulty}
+                            </div>
+                            <div class="detail-item" style="background: rgba(255,152,0,0.15);">
+                                <span class="detail-icon">💰</span>
+                                ${getCostEmoji(meal.cost)} ${capitalizeFirst(meal.cost)}
+                            </div>
+                        </div>
+
+                        <div class="detail-item" style="margin-top: 10px; width: 100%; justify-content: center; background: rgba(76,175,80,0.1);">
+                            <span class="detail-icon">ℹ️</span>
+                            Click for details
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+
+            scheduleContent.innerHTML = html;
+
+            // Hide grocery list when showing new schedule
+            document.getElementById('groceryList').style.display = 'none';
+        }
+
+        function getCostEmoji(cost) {
+            const costMap = {
+                'low': '$',
+                'medium': '$$',
+                'medium-high': '$$$',
+                'high': '$$$$'
+            };
+            return costMap[cost] || '$';
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Two-tier image error handler: tries local, then Unsplash, then placeholder
+        window.handleImageError = function(img, emoji, name) {
+            // If we haven't tried the fallback (Unsplash) yet
+            if (img.src !== img.dataset.fallback && img.dataset.fallback) {
+                img.src = img.dataset.fallback; // Try Unsplash next
+            } else {
+                // Both local and Unsplash failed, show placeholder
+                img.style.display = 'none';
+                
+                // Create placeholder element
+                const placeholder = document.createElement('div');
+                placeholder.className = 'image-placeholder';
+                placeholder.innerHTML = `
+                    <div style="font-size: 0.9rem; color: #388E3C; background: rgba(255,255,255,0.8); padding: 4px 12px; border-radius: 20px; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);">
+                        ${name}
+                    </div>
+                    <div style="font-size: 3em; margin-bottom: 10px;">${emoji}</div>
+                `;
+                
+                // Insert after the image
+                img.parentNode.insertBefore(placeholder, img.nextSibling);
+            }
+        };
+
+        function showMealDetails(name, desc, time, difficulty, cost, emoji) {
+            const modal = document.getElementById('mealModal');
+            const ingredients = groceryDatabase[name] || [];
+            
+            // Set modal content
+            document.getElementById('modalTitle').textContent = `${emoji} ${name}`;
+            document.getElementById('modalSubtitle').textContent = desc;
+            
+            // Display ingredients
+            const ingredientsList = document.getElementById('ingredientsList');
+            ingredientsList.innerHTML = '';
+            ingredients.forEach(ingredient => {
+                const div = document.createElement('div');
+                div.className = 'ingredient-item';
+                div.textContent = ingredient;
+                ingredientsList.appendChild(div);
+            });
+            
+            // Display difficulty
+            const difficultyDisplay = document.getElementById('difficultyDisplay');
+            difficultyDisplay.innerHTML = `
+                <div style="margin-bottom: 10px;">Difficulty: <span class="difficulty-badge difficulty-${difficulty.toLowerCase()}">${difficulty}</span></div>
+                <div style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+                    ${difficulty === 'Easy' ? '🟢 Simple preparation, beginner-friendly' : 
+                      difficulty === 'Medium' ? '🟡 Requires some cooking skills and attention' : 
+                      '🔴 Complex recipe, experience recommended'}
+                </div>
+            `;
+            
+            // Display cost comparison
+            const costPercentage = getCostPercentage(cost);
+            const costBar = document.getElementById('costBar');
+            const costText = document.getElementById('costText');
+            
+            costBar.className = `cost-fill cost-${cost}`;
+            costBar.style.width = `${costPercentage}%`;
+            costText.textContent = `${getCostEmoji(cost)} ${capitalizeFirst(cost)}`;
+            
+            // Show modal
+            modal.classList.add('show');
+        }
+
+        function getCostPercentage(cost) {
+            const costValues = {
+                'low': 25,
+                'medium': 50,
+                'medium-high': 75,
+                'high': 100
+            };
+            return costValues[cost] || 25;
+        }
+
+        function closeMealModal() {
+            document.getElementById('mealModal').classList.remove('show');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('mealModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeMealModal();
+            }
+        });
+
+        function showGroceryList() {
+            if (!currentSchedule) {
+                alert('Please generate a schedule first!');
+                return;
+            }
+            
+            const groceryList = document.getElementById('groceryList');
+            const groceryItems = document.getElementById('groceryItems');
+            
+            // Hide restaurant list when showing grocery list
+            document.getElementById('restaurantList').style.display = 'none';
+            
+            // Collect all ingredients from current schedule
+            const allIngredients = [];
+            Object.values(currentSchedule).forEach(meal => {
+                const ingredients = groceryDatabase[meal.name] || [];
+                allIngredients.push(...ingredients);
+            });
+            
+            // Remove duplicates and sort
+            const uniqueIngredients = [...new Set(allIngredients)].sort();
+            
+            // Clear previous items
+            groceryItems.innerHTML = '';
+            
+            // Add items to list
+            uniqueIngredients.forEach(ingredient => {
+                const li = document.createElement('li');
+                li.textContent = ingredient;
+                li.classList.add('fade-in');
+                groceryItems.appendChild(li);
+            });
+            
+            // Show grocery list
+            groceryList.style.display = 'block';
+            
+            // Smooth scroll to grocery list
+            groceryList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function randomOrderOut() {
+            const restaurant = restaurantOptions[Math.floor(Math.random() * restaurantOptions.length)];
+            const restaurantList = document.getElementById('restaurantList');
+            const restaurantChoice = document.getElementById('restaurantChoice');
+            const restaurantItems = document.getElementById('restaurantItems');
+            
+            // Hide grocery list when showing restaurant options
+            document.getElementById('groceryList').style.display = 'none';
+            
+            // Update restaurant choice
+            restaurantChoice.textContent = `Tonight's pick: ${restaurant.name}! 🎉`;
+            
+            // Clear previous items
+            restaurantItems.innerHTML = '';
+            
+            // Add menu items
+            restaurant.items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                li.classList.add('fade-in');
+                restaurantItems.appendChild(li);
+            });
+            
+            // Show restaurant list
+            restaurantList.style.display = 'block';
+            
+            // Smooth scroll to restaurant list
+            restaurantList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeMealModal();
+            } else if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                generateSchedule();
+            } else if (e.key === 'g' || e.key === 'G') {
+                e.preventDefault();
+                showGroceryList();
+            } else if (e.key === 'o' || e.key === 'O') {
+                e.preventDefault();
+                randomOrderOut();
+            }
+        });
+    </script>
+</body>
+</html>
