@@ -178,11 +178,4 @@ function searchPlates(query) {
     return results;
 }
 
-// Restaurant options for ordering out
-const restaurantsConfig = [
-    { name: "Chipotle", items: ["Burrito Bowl", "Tacos", "Quesadilla", "Chips & Guacamole"] },
-    { name: "Chick-fil-A", items: ["Chicken Sandwich", "Chicken Nuggets", "Waffle Fries", "Milkshake"] },
-    { name: "Panda Express", items: ["Orange Chicken", "Beef & Broccoli", "Fried Rice", "Spring Rolls"] },
-    { name: "Wingstop", items: ["Classic Wings", "Boneless Wings", "Seasoned Fries", "Celery & Dip"] },
-    { name: "Guapos (Manassas, VA)", items: ["Chicken Fajitas", "Beef Enchiladas", "Tacos al Carbon", "Queso & Chips", "Guacamole Fresco"] }
-];
+// Restaurant options moved to restaurants-config.js
